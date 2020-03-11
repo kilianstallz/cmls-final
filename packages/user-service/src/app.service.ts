@@ -63,12 +63,13 @@ export class AppService {
       .send({ cmd: 'tankenLogin' }, { serial: wallboxSerial })
       .toPromise();
     if (!res.error) {
-      await this.wallboxService
+      const res = await this.wallboxService
         .send(
           { cmd: 'tankenStart' },
           { serial: wallboxSerial, limit: primaryLimit },
         )
         .toPromise();
+      console.log(res);
     }
   }
 

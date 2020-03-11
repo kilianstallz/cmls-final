@@ -61,11 +61,19 @@ export class AppController {
 
   @MessagePattern({ cmd: 'stopWallbox' })
   stopWallbox(serial: string) {
-    return this.udpService.stopWallbox(serial);
+    try {
+      return this.udpService.stopWallbox(serial);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   @MessagePattern({ cmd: 'startWallbox' })
   startWallbox(serial: string) {
-    return this.udpService.startWallbox(serial);
+    try {
+      return this.udpService.startWallbox(serial);
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Socket, createSocket } from 'dgram';
+import { Socket, createSocket, RemoteInfo } from 'dgram';
 import { Interval } from '@nestjs/schedule';
 import { IWallbox, IWallboxData, WallboxStatus } from '../types/wallbox.type';
 import { from, of, Observable, Subject } from 'rxjs';
@@ -89,7 +89,6 @@ export class UdpService {
     const port = this.wallboxMap[serial].port;
     return this.sendMessage({ msg: `display 0 0 0 0 ${msg}`, address, port });
   }
-
   private debugResponse(payload, rinfo) {
     switch (payload) {
       case 'report 3':
@@ -194,12 +193,12 @@ export class UdpService {
           break;
         case '2':
           console.log('Report 2');
-          format = this.processReport2(data);
+          format = this.processReport2(data, rinfo);
           sub.next(format);
           break;
         case '3':
           console.log('Report 3');
-          format = this.processReport3(data);
+          format = this.processReport3(data, rinfo);
           sub.next(format);
           break;
       }
@@ -226,10 +225,12 @@ export class UdpService {
     }
     return WallboxStatus.isUnplugged;
   }
-  private processReport2(data: any) {
+  private processReport2(data: any, rinfo: RemoteInfo) {
     const serial = data.Serial as string;
     const formatted = {
       serial,
+      address: rinfo.address,
+      port: rinfo.port,
       state: this.computeState(data.State, data.Plug),
       //   error: this.computeError(data.Error1, data.Error2) as string,
       isEnabled: data['Enable sys'] == 1 ? true : false,
@@ -245,11 +246,13 @@ export class UdpService {
     return formatted;
   }
 
-  private processReport3(data: any) {
+  private processReport3(data: any, rinfo: RemoteInfo) {
     const serial = data.Serial;
     const { U1, U2, U3, I1, I2, I3, P, PF } = data;
     const sessionEnergy = data['E pres'];
     const formatted = {
+      address: rinfo.address,
+      port: rinfo.port,
       serial,
       U1,
       U2,
