@@ -68,6 +68,7 @@ export default class Wallbox {
     this.socket.on("message", (msg: any, rinfo: RemoteInfo) => {
       const recvPayload = msg.toString();
       const { address, port } = rinfo;
+      console.log(recvPayload);
       switch (recvPayload) {
         case "report 1":
           return this.sendMessage(
