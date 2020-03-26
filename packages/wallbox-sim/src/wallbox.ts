@@ -24,7 +24,6 @@ export default class Wallbox {
   };
 
   constructor(serial: string) {
-    console.log("Creating new Wallbox");
     this.socket = createSocket("udp4");
     this._state.serial = serial;
     this._timeStarted = Date.now() / 1000;
@@ -65,10 +64,8 @@ export default class Wallbox {
 
   public startSocket() {
     this.socket.bind(7090);
-    this.socket.on("listening", () => {
-      console.log("Socket listening on port 7090");
-    });
-    this.socket.on("message", (msg, rinfo) => {
+    this.socket.on("listening", () => {});
+    this.socket.on("message", (msg: any, rinfo: RemoteInfo) => {
       const recvPayload = msg.toString();
       const { address, port } = rinfo;
       switch (recvPayload) {
@@ -96,8 +93,8 @@ export default class Wallbox {
               Plug: this.state.Plug,
               AuthON: 0,
               Authreq: 0,
-              "Enable sys": this.enabled,
-              "Enable user": 1,
+              "Enable sys": 1,
+              "Enable user": this.enabled,
               "Max curr": 0,
               "Max curr %": 1000,
               "Curr HW": 0,
