@@ -205,7 +205,3 @@ export default class Wallbox {
 
 const wb = new Wallbox("179643");
 wb.startSocket();
-wb.startChargingSession(20);
-setTimeout(() => {
-  wb.stopChargingSession();
-}, 10000);
