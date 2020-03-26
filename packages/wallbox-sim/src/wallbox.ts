@@ -26,7 +26,7 @@ export default class Wallbox {
   constructor(serial: string) {
     this.socket = createSocket("udp4");
     this._state.serial = serial;
-    this._timeStarted = Date.now() / 1000;
+    this._timeStarted = Math.round(Date.now() / 1000);
   }
 
   /**
@@ -59,7 +59,7 @@ export default class Wallbox {
   }
 
   get secondsActive() {
-    return Date.now() / 1000 - this._timeStarted;
+    return Math.round(Date.now() / 1000) - this._timeStarted;
   }
 
   public startSocket() {
@@ -67,7 +67,6 @@ export default class Wallbox {
     this.socket.on("listening", () => {});
     this.socket.on("message", (msg: any, rinfo: RemoteInfo) => {
       const recvPayload = msg.toString();
-      const { address, port } = rinfo;
       console.log(recvPayload);
       switch (recvPayload) {
         case "report 1":
