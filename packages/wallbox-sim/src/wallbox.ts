@@ -93,7 +93,7 @@ export default class Wallbox {
               Plug: this.state.Plug,
               AuthON: 0,
               Authreq: 0,
-              "Enable sys": this.enabled,
+              "Enable sys": this._state.enabled,
               "Enable user": 1,
               "Max curr": 0,
               "Max curr %": 1000,
@@ -133,6 +133,7 @@ export default class Wallbox {
         case "ena 0":
           this._state.enabled = 0;
           // stop current session
+          console.log(this._state);
           return this.sendMessage("TCH-OK :done", rinfo);
         case "ena 1":
           this._state.enabled = 1;
