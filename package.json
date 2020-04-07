@@ -1,7 +1,18 @@
 {
-  "name": "root",
+  "name": "@cmls/root",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "build": "lerna run build",
+    "start": "pm2"
+  },
   "devDependencies": {
     "lerna": "^3.20.2"
+  },
+  "dependencies": {
+    "pm2": "^4.2.3"
   }
 }

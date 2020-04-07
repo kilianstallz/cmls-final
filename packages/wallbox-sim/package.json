@@ -1,27 +1,22 @@
 {
-  "name": "wallbox",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "jest",
-    "build": "tsc",
-    "start": "node dist/wallbox.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/jest": "^25.1.4",
-    "@types/node": "^13.9.1",
-    "@types/uuid": "^7.0.0",
-    "jest": "^25.1.0",
-    "ts-jest": "^25.2.1",
-    "typescript": "^3.8.3"
-  },
-  "dependencies": {
-    "rxjs": "^6.5.4",
-    "uid": "^1.0.0",
-    "uuid": "^7.0.2"
-  }
+	"name": "wallbox",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/jest": "^25.1.4",
+		"@types/node": "^13.9.1",
+		"@types/uuid": "^7.0.0",
+		"jest": "^25.1.0",
+		"ts-jest": "^25.2.1",
+		"typescript": "^3.8.3"
+	},
+	"dependencies": {
+		"rxjs": "^6.5.4",
+		"uid": "^1.0.0",
+		"uuid": "^7.0.2"
+	}
 }

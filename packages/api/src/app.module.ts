@@ -8,7 +8,6 @@ import {ClientsModule, Transport} from '@nestjs/microservices'
     ClientsModule.register([
       {transport: Transport.TCP, options: {host: '127.0.0.1', port: 3001}, name: 'WALLBOX_SERVICE'},
       {transport: Transport.TCP, options: {host: '127.0.0.1', port: 3002}, name: 'SOALR_SERVICE'},
-      {transport: Transport.TCP, options: {host: '127.0.0.1', port: 3003}, name: 'USER_SERVICE'},
       {transport: Transport.TCP, options: {host: '127.0.0.1', port: 3004}, name: 'LOGGER_SERVICE'},
     ])
   ],

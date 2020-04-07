@@ -1,11 +1,12 @@
 export interface IWallbox {
   address: string;
   port: number;
-  transport: string;
+  serial: string
 }
 
 export interface IWallboxData {
   serial: string;
+  user?: string
   address: string;
   port: number;
   U1?: number;
@@ -17,16 +18,15 @@ export interface IWallboxData {
   P?: number;
   PF?: number;
   sessionEnergy?: number;
+  remainingEnergy?: number
   state?: WallboxStatus;
   isEnabled?: boolean;
   maxCurrentHW?: number;
   secondsActive?: number;
-  context?: {
-    state: number;
-    plug: number;
-    Error1: number;
-    Error2: number;
-  };
+  errors?: {
+    error1?: number
+    error2?: number
+  }
 }
 
 export enum WallboxStatus {

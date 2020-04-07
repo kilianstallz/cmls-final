@@ -4,46 +4,45 @@ import { Interval } from '@nestjs/schedule';
 import { IWallbox, IWallboxData, WallboxStatus } from '../types/wallbox.type';
 import { from, of, Observable, Subject } from 'rxjs';
 import { delay, concatMap, distinct, scan, concat } from 'rxjs/operators';
-import { ConfigService } from '../config/config.service';
 import { MqttService } from 'src/mqtt/mqtt.service';
+import config from '@cmls/config'
 
 @Injectable()
 export class UdpService {
   private logger: Logger;
-  private _socket: Socket;
+  private socket: Socket;
   private devices: IWallbox[];
   private nrOfDevices: number;
-  private statusMessages: string[];
   private currentDevice = 0;
 
   private isDebug = process.env.IS_DEBUG === 'true';
 
   constructor(private readonly mqttService: MqttService) {
-    const { globalConfig } = ConfigService;
-    this.nrOfDevices = globalConfig.wallboxes.length;
-    this.statusMessages = globalConfig.wallboxStatusMessages;
-    this.devices = globalConfig.wallboxes;
+    const { wallbox } = config;
+    this.nrOfDevices = wallbox.devices.length;
+    this.devices = wallbox.devices;
+
     this.logger = new Logger('UDP', true);
-    const port = globalConfig.wallboxPort;
-    this._socket = createSocket('udp4');
-    this._socket.bind(port, () => {
+
+    const port = wallbox.clientPort
+    this.socket = createSocket('udp4');
+
+    this.socket.bind(port, () => {
       this.logger.log(`UDP Socket bound to port: ${port}`);
+
+      // Initialize Wallbox-Data
+      wallbox.devices.forEach(v => {
+        this.wallboxMap[v.serial] = { address: v.address, port: v.port, serial: v.serial }
+      })
+
       this.Poller();
       this.mountMessageListener();
       this.publishInterval();
     });
   }
 
-  get socket(): Socket {
-    return this._socket;
-  }
-
-  get wallboxMap() {
-    return this._wallboxMap;
-  }
-
   public getWallbox(serial: string) {
-    return this._wallboxMap[serial];
+    return this.wallboxMap[serial];
   }
 
   sendMessage({
@@ -56,11 +55,11 @@ export class UdpService {
     port?: number;
   }): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!this._socket) {
+      if (!this.socket) {
         reject('Socket nicht gestartet!');
       }
       console.log('Sending ', msg);
-      this._socket.send(msg, port, address, error => {
+      this.socket.send(msg, port, address, error => {
         if (error) {
           return reject();
         }
@@ -70,25 +69,49 @@ export class UdpService {
   }
 
   public startWallbox(serial: string): Promise<void> {
-    const msg = ConfigService.globalConfig.wallboxCommands.start;
+    const msg = 'ena 1';
     const address = this.wallboxMap[serial].address;
-    const port = this.wallboxMap[serial].port;
+    const port = 7090;
     return this.sendMessage({ msg, port, address });
   }
 
-  public stopWallbox(serial: string): Promise<void> {
-    const msg = ConfigService.globalConfig.wallboxCommands.stop;
+  public async stopWallbox(serial: string): Promise<boolean> {
+    const msg = 'ena 0';
     const address = this.wallboxMap[serial].address;
-    const port = this.wallboxMap[serial].port;
-    return this.sendMessage({ msg, port, address });
+    const port = 7090;
+    await this.sendMessage({ msg, port, address });
+    return true;
   }
 
   public displayMessage(serial: string, message: string) {
-    const msg = ConfigService.globalConfig.wallboxCommands.stop;
     const address = this.wallboxMap[serial].address;
     const port = this.wallboxMap[serial].port;
-    return this.sendMessage({ msg: `display 0 0 0 0 ${msg}`, address, port });
+    return this.sendMessage({ msg: `display 0 0 0 0 ${message}`, address, port });
   }
+
+  public setUser(serial: string, user: string | null = null) {
+    this.wallboxMap[serial].user = user
+  }
+
+  public async setRange(serial: string, range: number) {
+    const wb = this.getWallbox(serial)
+    await this.sendMessage({
+      msg: `setenergy ${range*1000*10}`, // in 0,1Wh
+      address: wb.address,
+      port: wb.port
+    })
+  }
+
+  public async setCurrTime(serial: string, time: number) {
+    const wb = this.getWallbox(serial)
+    await this.sendMessage({
+      msg: `currtime 0 ${time*60}`, // in sekunden
+      address: wb.address,
+      port: wb.port
+    })
+  }
+
+
   private debugResponse(payload, rinfo) {
     switch (payload) {
       case 'report 3':
@@ -160,25 +183,22 @@ export class UdpService {
     const sub = new Subject(); // Subject to subscribe
     this.wallboxStateChange$ = sub.pipe(
       scan((acc, cur: any) => {
-        return { ...this._wallboxMap[cur.serial], ...cur };
+        return { ...this.wallboxMap[cur.serial], ...cur };
       }), // Scan merges the before and the after value
       concat(
         // Only emits a new value when one of those values change
         distinct((e: IWallboxData) => e.secondsActive), // COMMENT OUT IN ACTIVE USE
         distinct((e: IWallboxData) => e.sessionEnergy),
         distinct((e: IWallboxData) => e.state),
-        distinct((e: IWallboxData) => e.context.Error1),
-        distinct((e: IWallboxData) => e.context.Error2),
-        distinct((e: IWallboxData) => e.context.plug),
         distinct((e: IWallboxData) => e.isEnabled),
       ),
     );
     this.wallboxStateChange$.subscribe(n => {
-      this._wallboxMap[n.serial] = n;
+      this.wallboxMap[n.serial] = n;
       this.logger.log(`${n.serial} has changed!`);
     });
 
-    this._socket.on('message', (buff, rinfo) => {
+    this.socket.on('message', (buff, rinfo) => {
       const payload = buff.toString();
       if (!payload.startsWith('{')) {
         if (this.isDebug) {
@@ -192,12 +212,10 @@ export class UdpService {
         case '1':
           break;
         case '2':
-          console.log('Report 2');
           format = this.processReport2(data, rinfo);
           sub.next(format);
           break;
         case '3':
-          console.log('Report 3');
           format = this.processReport3(data, rinfo);
           sub.next(format);
           break;
@@ -205,26 +223,32 @@ export class UdpService {
     });
   }
 
-  // WALLBOX LOCAL MAP
-  private _wallboxMap: { [key: string]: IWallboxData } = {};
+  /**
+   * Wallbox Map aller Wallboxen
+   */
+  wallboxMap: { [key: string]: IWallboxData } = {};
+
+  /**
+   * Compute & Reducer Functions --------------------------------------------
+   */
 
   /**
    * Process Respone logic
    */
   private computeState(state, plug): WallboxStatus {
     // TODO: Compute State
-    console.log(state, plug);
-    if (state === 1) {
+    if (state === 1 && plug === 0) {
       return WallboxStatus.isUnplugged;
     } else if (state === 2) {
       return WallboxStatus.isPlugged;
-    } else if (state === 3) {
+    } else if (state === 3 && plug === 7) {
       return WallboxStatus.isCharging;
     } else if (state === 4) {
       return WallboxStatus.isError;
     }
-    return WallboxStatus.isUnplugged;
+    return WallboxStatus.isError;
   }
+
   private processReport2(data: any, rinfo: RemoteInfo) {
     const serial = data.Serial as string;
     const formatted = {
@@ -233,13 +257,12 @@ export class UdpService {
       port: rinfo.port,
       state: this.computeState(data.State, data.Plug),
       //   error: this.computeError(data.Error1, data.Error2) as string,
-      isEnabled: data['Enable sys'] == 1 ? true : false,
+      isEnabled: data['Enable sys'] === 1 ? true : false,
+      remainingEnergy: data.Setenergy,
       maxCurrentHW: data['Curr HW'] as number,
-      context: {
-        Error1: data.Error1,
-        Error2: data.Error2,
-        plug: data.Plug,
-        state: data.State,
+      errors: {
+        error1: data.Error1,
+        error2: data.Error2,
       },
       secondsActive: data.Sec,
     } as IWallboxData;
@@ -268,25 +291,21 @@ export class UdpService {
     return formatted;
   }
 
-  // [END] Process Response Logic
+  // [END] Compute & Reducer Functions
 
   /**
    * Poller Intervall
    */
-  @Interval(ConfigService.globalConfig.devicePollingInterval)
+  @Interval(config.wallbox.pollInterval)
   private async Poller() {
     // Load device data
-    const { address, port, transport } = this.devices[this.currentDevice];
-    // only do udp poll on udp devices
-    if (transport !== 'udp') {
-      return;
-    }
+    const { address, port  } = this.devices[this.currentDevice];
     this.logger.log(`${address}: POLLING`);
-    from(this.statusMessages) // get status messages
+    from(['report 2', 'report 3']) // get status messages
       .pipe(
         concatMap(device => {
           return of(device) // observable of each array element
-            .pipe(delay(ConfigService.globalConfig.messageDelayInterval)) // delay the message
+            .pipe(delay(200)) // delay the message
             .pipe(
               concatMap(msg => {
                 // concat to send message
@@ -315,10 +334,10 @@ export class UdpService {
   @Interval(4000)
   publishInterval() {
     // DO not publish emptry objects
-    if (Object.keys(this._wallboxMap).length !== 0) {
+    if (Object.keys(this.wallboxMap).length !== 0) {
       this.mqttService.sendMessageToTopic(
         'energie/wallboxData',
-        JSON.stringify(this._wallboxMap),
+        JSON.stringify(this.wallboxMap),
       );
     }
   }
