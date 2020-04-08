@@ -11,7 +11,8 @@ export class AppService {
   constructor(
     @Inject('WALLBOX_SERVICE') private wallboxClient: ClientProxy,
   ) {
-    const { brokerUrl, password,port,host,username } = config.mqtt
+    const { brokerUrl, password,port,host,username } = config().mqtt
+    console.log(config().mqtt)
     this.mqtt = connect(brokerUrl, {
       host,
       username,

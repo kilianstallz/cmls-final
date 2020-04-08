@@ -10,8 +10,8 @@ export class MqttService {
       protocol: 'mqtt',
       host: 'docker.htl-wels.at',
       port: 1883,
-      password: 'NiceWeather',
-      username: 'energieHTL',
+      password: process.env.MQTT_PASSWORD,
+      username: process.env.MQTT_USER,
     });
   }
 

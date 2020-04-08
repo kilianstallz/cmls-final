@@ -1,4 +1,4 @@
-declare const _default: {
+declare const _default: () => {
     solar: {
         pollInterval: number;
     };
@@ -6,8 +6,8 @@ declare const _default: {
         brokerUrl: string;
         host: string;
         port: number;
-        username: string;
-        password: string;
+        username: string | undefined;
+        password: string | undefined;
     };
     wallbox: {
         pollInterval: number;

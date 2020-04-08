@@ -5,10 +5,12 @@ import { MemoryService } from './memory/memory.service';
 import { UdpService } from './udp/udp.service';
 import {ScheduleModule} from '@nestjs/schedule'
 import { MqttService } from './mqtt/mqtt.service';
+import { ConfigModule } from '@nestjs/config'
 
 @Module({
   imports: [
-  ScheduleModule.forRoot()
+    ConfigModule.forRoot(),
+    ScheduleModule.forRoot()
 ],
   controllers: [AppController],
   providers: [AppService, MemoryService, UdpService, MqttService],

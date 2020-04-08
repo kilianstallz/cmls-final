@@ -22,6 +22,7 @@
   "dependencies": {
     "@cmls/config": "*",
     "@nestjs/common": "^6.7.2",
+    "@nestjs/config": "^0.4.0",
     "@nestjs/core": "^6.7.2",
     "@nestjs/microservices": "^6.11.11",
     "@nestjs/platform-express": "^6.7.2",

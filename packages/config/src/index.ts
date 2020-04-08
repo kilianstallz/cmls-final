@@ -1,4 +1,8 @@
-export default {
+import { config } from 'dotenv'
+
+export default () => {
+    config()
+    return {
     solar: {
         pollInterval: 5000
     },
@@ -6,8 +10,8 @@ export default {
         brokerUrl: 'https://docker.htl-wels.at',
         host: 'docker.htl-wels.at',
         port: 1883,
-        username: '###',
-        password: '####'
+        username: process.env.MQTT_USER, // .env Muss in jedem Package vorhanden sein
+        password: process.env.MQTT_PASSWORD // .env muss in jedem Package vorhanden sein
     },
     wallbox: {
         pollInterval: 2500,
@@ -17,4 +21,4 @@ export default {
         ],
 
     }
-}
+}}
