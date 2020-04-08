@@ -18,7 +18,7 @@ export class UdpService {
   private isDebug = process.env.IS_DEBUG === 'true';
 
   constructor(private readonly mqttService: MqttService) {
-    const { wallbox } = config;
+    const { wallbox } = config();
     this.nrOfDevices = wallbox.devices.length;
     this.devices = wallbox.devices;
 
@@ -296,7 +296,7 @@ export class UdpService {
   /**
    * Poller Intervall
    */
-  @Interval(config.wallbox.pollInterval)
+  @Interval(config().wallbox.pollInterval)
   private async Poller() {
     // Load device data
     const { address, port  } = this.devices[this.currentDevice];

@@ -3,12 +3,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as modbus from 'jsmodbus'
 import { Socket } from 'net'
 import { connect, Client } from 'mqtt'
-import config from '@cmls/config'
+import Config from '@cmls/config'
 import { Interval } from '@nestjs/schedule';
+const config = Config()
 
 @Injectable()
 export class AppService {
-
   private socket: Socket
   private modbusClient: any
   private devices: {address: string, port: number}[]
