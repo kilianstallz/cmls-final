@@ -6,8 +6,8 @@ export default {
         brokerUrl: 'https://docker.htl-wels.at',
         host: 'docker.htl-wels.at',
         port: 1883,
-        username: 'energieHTL',
-        password: 'NiceWeather'
+        username: '###',
+        password: '####'
     },
     wallbox: {
         pollInterval: 2500,
