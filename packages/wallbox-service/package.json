@@ -24,7 +24,7 @@
 		"@nestjs/config": "^0.2.4",
 		"@nestjs/core": "^6.7.2",
 		"@nestjs/microservices": "^6.11.11",
-		"@nestjs/platform-express": "^6.7.2",
+		"@nestjs/platform-express": "^9.2.1",
 		"@nestjs/schedule": "^0.2.0",
 		"mqtt": "^3.0.0",
 		"node-persist": "^3.0.5",
